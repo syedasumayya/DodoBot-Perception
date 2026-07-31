@@ -1,0 +1,46 @@
+DoDo Bot — Day 1 Obstacle Detection — Training Log
+====================================================
+
+Environment:
+  Ultralytics 8.4.114, Python 3.12.13, torch 2.11.0+cu128, CUDA:0 (Tesla T4, 14913MiB)
+
+Config:
+  Model: yolov8n.pt (pretrained, fine-tuned)
+  epochs: 20
+  imgsz: 640
+  batch: 16 (auto)
+  optimizer: AdamW (auto-selected), lr0=0.00012
+  data: dataset.yaml (79 classes — full filtered COCO export, train=val=images/val)
+  Dataset size: 2000 images, 19424 labeled instances
+
+Per-epoch summary (all classes combined):
+
+Epoch  box_loss  cls_loss  dfl_loss  Precision  Recall  mAP50   mAP50-95
+1      1.248     3.851     1.252     0.245      0.009   0.012   0.008
+5      1.299     2.318     1.280     0.542      0.296   0.301   0.207
+10     1.265     1.980     1.255     0.602      0.395   0.411   0.288
+15     1.200     1.916     1.205     0.631      0.427   0.453   0.323
+20     1.172     1.839     1.190     0.675      0.439   0.481   0.346
+
+Final validation (best.pt), all classes: P=0.676  R=0.440  mAP50=0.482  mAP50-95=0.346
+
+Key classes relevant to DoDo Bot obstacle avoidance:
+  person         Instances=7446  P=0.872  R=0.632  mAP50=0.766  mAP50-95=0.540
+  dining table   Instances=490   P=0.764  R=0.467  mAP50=0.563  mAP50-95=0.422
+  chair          Instances=1172  P=0.673  R=0.474  mAP50=0.547  mAP50-95=0.373
+  handbag        Instances=458   P=0.564  R=0.114  mAP50=0.196  mAP50-95=0.118
+  backpack       Instances=327   P=0.586  R=0.220  mAP50=0.272  mAP50-95=0.163
+
+Weakest classes (very low instance counts, expected — not a bug):
+  hair drier     Instances=2     mAP50=0.000
+  toilet         Instances=10    mAP50=0.011
+  scissors       Instances=16    mAP50=0.047
+  zebra          Instances=1     mAP50=0.066
+
+Training time: 20 epochs completed in 0.298 hours (~18 minutes) on T4 GPU.
+
+Artifacts produced:
+  runs/detect/dodo_obstacle_baseline/weights/best.pt   (downloaded, saved to Day1_ObstacleDetection/weights/)
+  runs/detect/dodo_obstacle_baseline/weights/last.pt
+  runs/detect/dodo_obstacle_baseline/results.png
+  runs/detect/dodo_obstacle_baseline/confusion_matrix.png
