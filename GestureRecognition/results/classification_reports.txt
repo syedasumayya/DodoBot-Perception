@@ -1,0 +1,80 @@
+DoDo Bot — Gesture Recognition — Results Log
+====================================================
+
+Dataset: HaGRID (hagrid-classification-512p, via kagglehub), 11.7GB downloaded.
+Feature extraction: MediaPipe HandLandmarker (Tasks API), 21 landmarks x 3 (x,y,z) = 63 features.
+Extraction yield: 2777 / 3000 images (92.5%) had a detectable hand.
+
+---------------------------------------------------------------
+ATTEMPT 1 — 10 classes (palm, fist, ok, peace, like, dislike, call, one, two_up, mute)
+---------------------------------------------------------------
+
+Random Forest (200 trees), 80/20 stratified split:
+
+              precision    recall  f1-score   support
+palm              0.97      1.00      0.98        59
+fist              0.91      0.98      0.95        54
+ok                1.00      0.98      0.99        56
+peace             0.73      0.60      0.66        55
+like              0.90      0.85      0.88        55
+dislike           0.98      0.98      0.98        54
+call              0.85      0.93      0.89        56
+one               0.96      0.90      0.93        58
+two_up            0.65      0.73      0.69        56
+mute              0.96      0.96      0.96        53
+accuracy                              0.89       556
+
+Neural Network (128-64 dense, dropout, 40 epochs):
+
+              precision    recall  f1-score   support
+palm              0.98      1.00      0.99        59
+fist              0.96      1.00      0.98        54
+ok                1.00      1.00      1.00        56
+peace             0.64      0.53      0.58        55
+like              0.87      0.87      0.87        55
+dislike           0.98      0.98      0.98        54
+call              0.86      0.88      0.87        56
+one               0.89      0.93      0.91        58
+two_up            0.61      0.71      0.66        56
+mute              0.98      0.85      0.91        53
+accuracy                              0.88       556
+
+Confusion matrix (Random Forest) — peace/two_up pair highlighted:
+peace row:   29-33 correct, 21-26 misclassified as two_up
+two_up row:  40-41 correct, 12-14 misclassified as peace
+
+Diagnosis: both a tree-based model and a neural network hit the same wall on
+the same class pair -> the confusion is inherent to the landmark features for
+these two visually-similar gestures, not a weak-classifier problem.
+
+Decision: drop two_up. `peace` maps to "menu/bill request" in the gesture
+table (intuitive, likely used); `two_up` was an arbitrary custom mapping to
+"navigation command" that `one` (pointing) can reasonably cover instead.
+
+---------------------------------------------------------------
+FINAL — 9 classes (two_up removed)
+---------------------------------------------------------------
+
+Final dataset: 2495 samples, 499 in validation split.
+
+Random Forest (200 trees), 80/20 stratified split:
+
+              precision    recall  f1-score   support
+palm              0.97      1.00      0.98        59
+fist              0.93      0.98      0.95        54
+ok                1.00      0.96      0.98        56
+peace             0.98      0.98      0.98        55
+like              0.94      0.85      0.90        55
+dislike           0.98      0.98      0.98        54
+call              0.83      0.95      0.88        56
+one               0.89      0.89      0.89        57
+mute              0.96      0.85      0.90        53
+accuracy                              0.94       499
+
+Remaining minor confusion: `like` <-> `call` (8 misclassifications) — both
+involve an extended thumb. Small residual, not addressed further tonight.
+
+Artifact produced: gesture_classifier_final.pkl (Random Forest, 9 classes)
+Chosen over the neural network for deployment: near-identical accuracy (94%
+vs. comparable NN performance), but simpler, faster to train, and does not
+require GPU for inference — better fit for eventual on-robot deployment.
